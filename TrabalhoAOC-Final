@@ -1,0 +1,199 @@
+.data 
+	menu: .asciiz "\nDigite o que deseja:\n1-Criar mensagem \n2-Ler mensagens \n3-Apagar mensagem \n4-Reescrever mensagem\n5-Sair\n\n"
+ 	mensagem: .asciiz "Digite a mensagem: \n"
+ 	mensagemAtt: .asciiz "Digite a mensagem nova: \n"
+ 	mensagemApagar: .asciiz "Digite o numero da mensagem a ser apagada: \n"
+ 	mensagemUpdate: .asciiz "Digite o numero da mensagem a ser atualizada: \n"
+ 	input: .space 20 #inser��o do usuario
+ 	quebra: .asciiz "\n"
+ 	traco: .asciiz ")"
+ 	
+ 	lista:	.space 20
+ 		.space 20
+ 		.space 20
+ 		.space 20
+ 		.space 20
+
+
+ 	.eqv DATA_SIZE 20
+ 	
+	# a3 = inicio
+
+.text
+
+	la $a3, lista 	# upando endere�o da lista pro a3 = cria��o da lista
+	la $a2, lista 	# upando endere�o da lista pro a2 = listagem
+	la $t2, lista  	# passando endere�o da lista para o t2 = delete
+	la $t4, lista   # passando endere�o da lista para o t4 = update
+			# VARIAVEIS EM USO: A1, A2, A3, T1, T2, T3,T4
+	
+	
+	addi $t1, $zero, 0
+	
+	j main
+	
+	printIndex:
+	
+	addi $t1, $t1, 1 #incrementa
+	
+	li $v0, 4
+	la $a0, quebra
+	syscall
+	
+	li $v0, 1	#print do indice da lista
+	move $a0, $t1
+	syscall
+	
+	li $v0, 4	#print do ")"
+	la $a0, traco 
+	syscall
+	
+	j voltaPI
+	
+	main:
+		li $v0, 4
+		la $a0, quebra
+		syscall
+		#MENU
+		li $v0, 4
+		la $a0, menu
+		syscall
+		
+		#CARREGA OP��O DO MENU
+		li $v0, 5 	#comando 5 le inteiro
+		syscall	
+		move $t0, $v0  	#carrega o char em $t0
+		
+		beq $t0,1,create
+		beq $t0,2,listar
+		beq $t0,3,apagar
+		beq $t0,4,update
+		beq $t0,5,sair
+		
+	create:	
+
+		##DIGITE A MENSAGEM
+		li $v0, 4
+		la $a0, mensagem
+		syscall
+		
+		#RECEBENDO A MENSAGEM DO USUARIO
+		li $v0, 8 # comando para ler
+		la $a0, 0($a3)  
+		li $a1, DATA_SIZE # tamanho do input
+		syscall
+	
+		addi $a3, $a3, DATA_SIZE
+	
+		j main
+		
+	listar:
+		addi $t0, $zero, 0 #index para percorrer
+	repeat:
+		beq $t0, 0, printIndex
+		beq $t0, 20, printIndex
+		beq $t0, 40, printIndex
+	 	beq $t0, 60, printIndex
+	 	beq $t0, 80, printIndex
+	 	
+	voltaPI:li $v0, 11
+		lb $a0, 0($a2)
+		syscall
+		
+		addi $a2, $a2, 1 #passa para a pr�xima letra
+		addi $t0, $t0, 1 # i++
+		
+		bne $t0, 100, repeat #passa pelas 5 strings, 5x20=100
+		
+		subi $a2, $a2, 100 #reseta valores de referencia da lista
+		
+		addi $t1, $zero, 0
+		
+		j main #volta para a main
+	
+	apagar:
+		addi $t0, $zero, 0
+		
+		##DIGITE A MENSAGEM
+		li $v0, 4
+		la $a0, mensagemApagar
+		syscall
+		
+		#ESCOLHE STRING
+		li $v0, 5 	#comando 5 le inteiro
+		syscall	
+		move $t0, $v0  	#carrega o char em $t0
+		
+		subi $t0, $t0, 1 #altera��es em index
+		
+		#mul $t0, $t0 ,20
+		addi $t3, $zero, 20
+		mult $t0, $t3		
+		mflo $t0	
+		addi $t3, $zero, 0
+		add $t2, $t2, $t0
+		addi $t0, $zero, 0
+		
+		#LOOP PARA APAGAR
+		addi $t3, $zero, 1 #guarda 1
+   loopdeApagar:
+		
+   		sb $zero, ($t2)
+   		
+   		
+   		add $t2, $t2, $t3 #passa para a pr�xima letra
+   		addi $t0, $t0, 1 # i++
+				
+		bne $t0, 20, loopdeApagar
+		
+		la $t2, lista
+		addi $t3, $zero, 0
+		
+		j main
+		
+	update:	
+	
+		addi $t0, $zero, 0
+		
+		##DIGITE A MENSAGEM
+		li $v0, 4
+		la $a0, mensagemUpdate
+		syscall
+		
+		#ESCOLHE STRING
+		li $v0, 5 	#comando 5 le inteiro
+		syscall	
+		move $t0, $v0  	#carrega o char em $t0
+		
+		subi $t0, $t0, 1 #altera��es em index
+		
+		#CORRE��O DO ENDERE�O
+		addi $t3, $zero, 20
+		mult $t0, $t3		
+		mflo $t0	
+		addi $t3, $zero, 0
+		add $t4, $t4, $t0
+		
+		#
+		#INSERIR FUN��O DE LEITURA E PASSAR PRA LISTA
+		#
+		
+		##DIGITE A MENSAGEM NOVA
+		li $v0, 4
+		la $a0, mensagemAtt
+		syscall
+
+		
+		#RECEBENDO A MENSAGEM DO USUARIO
+		li $v0, 8 # comando para ler
+		la $a0, 0($t4)  
+		li $a1, DATA_SIZE # tamanho do input
+		syscall
+
+		addi $t4, $zero, 0
+		
+		j main
+
+	sair:
+	li $v0, 10
+	syscall 
